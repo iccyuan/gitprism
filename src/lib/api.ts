@@ -56,6 +56,11 @@ export interface BranchInfo {
   behind: number | null;
 }
 
+/** how much of the gitignored set the 全部文件 tree lists:
+ * hide = none, files = ignored files in the normal tree (dimmed) but not
+ * ignored directories, all = everything incl. node_modules-style dirs */
+export type IgnoredMode = "hide" | "files" | "all";
+
 /** list_files result: every path in the project view plus the gitignored subset */
 export interface FileListing {
   files: string[];
@@ -234,8 +239,7 @@ export const api = {
   abortOperation: (repo: string) => invoke<void>("abort_operation", { repo }),
   watchRepo: (repo: string) => invoke<void>("watch_repo", { repo }),
   unwatchRepo: (repo: string) => invoke<void>("unwatch_repo", { repo }),
-  listFiles: (repo: string, showIgnored: boolean) =>
-    invoke<FileListing>("list_files", { repo, showIgnored }),
+  listFiles: (repo: string, mode: IgnoredMode) => invoke<FileListing>("list_files", { repo, mode }),
   readFile: (repo: string, path: string) => invoke<FileContent>("read_file", { repo, path }),
   writeFile: (repo: string, path: string, content: string) => invoke<void>("write_file", { repo, path, content }),
   repoStats: (repo: string) => invoke<RepoStats>("repo_stats", { repo }),

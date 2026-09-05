@@ -1118,22 +1118,37 @@ fn split_nul(out: &str) -> impl Iterator<Item = &str> {
     out.split('\0').filter(|s| !s.is_empty())
 }
 
-/// All files in the project view: tracked (incl. staged) + untracked +
-/// gitignored. Ignored files that sit in an otherwise-tracked tree
-/// (local.properties, .env, *.iml, …) are always listed — an IDE-style project
-/// view hides nothing the user wrote — but flagged so the UI can dim them.
-/// Ignored *directories* (node_modules, build/, .gradle/ …) stay collapsed
-/// out of the listing unless `show_ignored` is set; they are bulk, not the
-/// user's files. The .git directory is always skipped by git itself.
+/// How much of what .gitignore excludes the 全部文件 tree lists.
+#[derive(Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
+#[serde(rename_all = "camelCase")]
+pub enum IgnoredMode {
+    /// nothing ignored — tracked + untracked only
+    Hide,
+    /// ignored files sitting in the normal tree (local.properties, .env,
+    /// *.iml …) are listed (dimmed); wholly ignored directories
+    /// (node_modules, build/ …) stay out — they are bulk, not the user's files
+    Files,
+    /// everything, ignored directories' contents included
+    All,
+}
+
+/// All files in the project view: tracked (incl. staged) + untracked, plus
+/// whatever `mode` admits of the gitignored set — flagged in `ignored` so the
+/// UI can dim it. The .git directory is always skipped by git itself.
 #[tauri::command]
-pub async fn list_files(repo: String, show_ignored: bool) -> Result<FileListing, String> {
+pub async fn list_files(repo: String, mode: IgnoredMode) -> Result<FileListing, String> {
     let repo = PathBuf::from(repo);
     let out = run_git_text(&repo, &["ls-files", "--cached", "--others", "--exclude-standard", "-z"])?;
     let mut files: Vec<String> = split_nul(&out).map(str::to_string).collect();
+    if mode == IgnoredMode::Hide {
+        files.sort();
+        files.dedup();
+        return Ok(FileListing { files, ignored: Vec::new() });
+    }
     // --directory collapses a wholly ignored dir to one "dir/" entry, which
     // we drop; without it every file under node_modules etc. comes back
     let mut args = vec!["ls-files", "--others", "--ignored", "--exclude-standard"];
-    if !show_ignored {
+    if mode == IgnoredMode::Files {
         args.push("--directory");
     }
     args.push("-z");
@@ -2972,10 +2987,14 @@ mod repo_tests {
         bl(super::get_status(repo))
     }
     fn list_files(repo: String, show_ignored: bool) -> Result<Vec<String>, String> {
-        bl(super::list_files(repo, show_ignored)).map(|l| l.files)
+        list_files_full(repo, show_ignored).map(|l| l.files)
     }
     fn list_files_full(repo: String, show_ignored: bool) -> Result<FileListing, String> {
-        bl(super::list_files(repo, show_ignored))
+        let mode = if show_ignored { IgnoredMode::All } else { IgnoredMode::Files };
+        bl(super::list_files(repo, mode))
+    }
+    fn list_files_mode(repo: String, mode: IgnoredMode) -> Result<FileListing, String> {
+        bl(super::list_files(repo, mode))
     }
     fn read_file(repo: String, path: String) -> Result<FileContent, String> {
         bl(super::read_file(repo, path))
@@ -3539,6 +3558,13 @@ mod repo_tests {
         assert!(with_ignored.files.contains(&"tracked.txt".to_string()));
         assert!(with_ignored.files.contains(&"ignored.txt".to_string()));
         assert_eq!(with_ignored.ignored, vec!["ignored.txt".to_string()]);
+
+        // Hide drops every ignored path, tracked/untracked untouched
+        let hidden = list_files_mode(r.root(), IgnoredMode::Hide).unwrap();
+        assert!(hidden.files.contains(&"tracked.txt".to_string()));
+        assert!(hidden.files.contains(&"untracked.txt".to_string()));
+        assert!(!hidden.files.contains(&"ignored.txt".to_string()), "Hide must drop ignored files");
+        assert!(hidden.ignored.is_empty());
 
         let c = read_file(r.root(), "tracked.txt".into()).unwrap();
         assert_eq!(c.content.as_deref(), Some("hello\n"));

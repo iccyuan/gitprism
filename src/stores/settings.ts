@@ -1,4 +1,5 @@
 import { acceptHMRUpdate, defineStore } from "pinia";
+import type { IgnoredMode } from "../lib/api";
 import { LazyStore } from "@tauri-apps/plugin-store";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -61,8 +62,8 @@ export const useSettingsStore = defineStore("settings", {
     pullStrategy: "merge" as "merge" | "rebase",
     glassEffect: true,
     glassOpacity: 54,
-    /** 全部文件 view: also list .gitignore'd / hidden files and folders */
-    showHidden: false,
+    /** 全部文件 view: how much of what .gitignore excludes is listed */
+    ignoredMode: "files" as IgnoredMode,
     /** 全部文件 editor: save automatically shortly after the last edit */
     autoSave: false,
   }),
@@ -99,7 +100,9 @@ export const useSettingsStore = defineStore("settings", {
         const pullStrategy = await persist.get<string>("pullStrategy");
         const glass = await persist.get<boolean>("glassEffect");
         const glassOp = await persist.get<number>("glassOpacity");
-        const hidden = await persist.get<boolean>("showHidden");
+        const ignoredMode = await persist.get<string>("ignoredMode");
+        // pre-0.3.5 boolean "显示隐藏的文件和文件夹"
+        const legacyHidden = await persist.get<boolean>("showHidden");
         const autoSave = await persist.get<boolean>("autoSave");
         if (theme && THEMES.some((t) => t.id === theme)) this.monacoTheme = theme;
         if (typeof side === "boolean") this.renderSideBySide = side;
@@ -121,7 +124,8 @@ export const useSettingsStore = defineStore("settings", {
         if (typeof autoSave === "boolean") this.autoSave = autoSave;
         if (typeof glass === "boolean") this.glassEffect = glass;
         if (typeof glassOp === "number" && glassOp >= 25 && glassOp <= 75) this.glassOpacity = glassOp;
-        if (typeof hidden === "boolean") this.showHidden = hidden;
+        if (ignoredMode === "hide" || ignoredMode === "files" || ignoredMode === "all") this.ignoredMode = ignoredMode;
+        else if (legacyHidden === true) this.ignoredMode = "all";
       } catch {
         // first launch / unreadable store: keep defaults
       }
@@ -175,9 +179,9 @@ export const useSettingsStore = defineStore("settings", {
       await persist.set("editorLineHeight", this.editorLineHeight);
       await persist.save();
     },
-    async setShowHidden(v: boolean) {
-      this.showHidden = v;
-      await persist.set("showHidden", v);
+    async setIgnoredMode(mode: IgnoredMode) {
+      this.ignoredMode = mode;
+      await persist.set("ignoredMode", mode);
       await persist.save();
     },
     async saveSidebarWidth() {

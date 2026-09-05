@@ -378,9 +378,19 @@ function onUpdateCheck() {
           <span class="menu-check">{{ settings.renderSideBySide ? "✓" : "" }}</span>
           <span class="recent-text"><span class="recent-name">并排显示 diff</span></span>
         </button>
-        <button class="recent-item" @mouseenter="cancelSub" @click.stop="repo.toggleHidden()">
-          <span class="menu-check">{{ settings.showHidden ? "✓" : "" }}</span>
-          <span class="recent-text"><span class="recent-name">显示隐藏的文件和文件夹</span></span>
+        <div class="ctx-sep"></div>
+        <div class="menu-group-label">被忽略的文件（.gitignore）</div>
+        <button class="recent-item" @mouseenter="cancelSub" @click.stop="repo.setIgnoredMode('hide')">
+          <span class="menu-check">{{ settings.ignoredMode === "hide" ? "✓" : "" }}</span>
+          <span class="recent-text"><span class="recent-name">不显示</span></span>
+        </button>
+        <button class="recent-item" @mouseenter="cancelSub" @click.stop="repo.setIgnoredMode('files')">
+          <span class="menu-check">{{ settings.ignoredMode === "files" ? "✓" : "" }}</span>
+          <span class="recent-text"><span class="recent-name">只显示文件（如 local.properties，灰色）</span></span>
+        </button>
+        <button class="recent-item" @mouseenter="cancelSub" @click.stop="repo.setIgnoredMode('all')">
+          <span class="menu-check">{{ settings.ignoredMode === "all" ? "✓" : "" }}</span>
+          <span class="recent-text"><span class="recent-name">全部显示（含 node_modules、build 等目录）</span></span>
         </button>
         <div class="ctx-sep"></div>
         <button class="recent-item" @mouseenter="cancelSub" @click.stop="settings.setGlassEffect(!settings.glassEffect)">

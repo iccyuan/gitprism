@@ -9,6 +9,7 @@ import {
   type FileStatus,
   type ForceMode,
   type Hunk,
+  type IgnoredMode,
   type RepoChangedEvent,
   type RepoInfo,
   type ResetMode,
@@ -360,7 +361,7 @@ export const useRepoStore = defineStore("repo", {
       if (w && active && !active.commit) await this.loadForTab(w, active);
     },
     async loadAllFiles(w: Workspace) {
-      const listing = await api.listFiles(w.repo.root, useSettingsStore().showHidden);
+      const listing = await api.listFiles(w.repo.root, useSettingsStore().ignoredMode);
       w.allFiles = listing.files;
       w.ignoredFiles = listing.ignored;
     },
@@ -373,10 +374,12 @@ export const useRepoStore = defineStore("repo", {
         toast(String(e), "error");
       }
     },
-    /** flip "显示隐藏的文件和文件夹" and rebuild the all-files list everywhere */
-    async toggleHidden() {
+    /** pick how much of the gitignored set the tree lists and rebuild the
+     * all-files list everywhere */
+    async setIgnoredMode(mode: IgnoredMode) {
       const settings = useSettingsStore();
-      await settings.setShowHidden(!settings.showHidden);
+      if (settings.ignoredMode === mode) return;
+      await settings.setIgnoredMode(mode);
       // every workspace's cached list is now stale; clear so it re-fetches lazily
       for (const w of this.workspaces) {
         w.allFiles = [];
