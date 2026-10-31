@@ -190,6 +190,18 @@ const EXT_LANG: Record<string, string> = {
   ".aidl": "java", // Android IDL: Java-style interfaces/parcelables
   ".hidl": "java",
   ".kts": "kotlin",
+  // Qt: QML is JS-with-object-blocks; qmake files are shell-like key=value;
+  // .ui/.qrc are XML; .qss is CSS. (.ts is left to TypeScript, not Qt Linguist.)
+  ".qml": "javascript",
+  ".pro": "shell",
+  ".pri": "shell",
+  ".prf": "shell",
+  ".ui": "xml",
+  ".qrc": "xml",
+  ".qss": "css",
+  ".cmake": "shell",
+  ".ipp": "cpp",
+  ".inl": "cpp",
   ".toml": "ini",
   ".lock": "ini",
   ".properties": "ini",

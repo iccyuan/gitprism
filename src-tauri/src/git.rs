@@ -1222,6 +1222,7 @@ fn language_for(rel_path: &str) -> Option<(&'static str, &'static str)> {
     match file_name {
         "dockerfile" => return Some(("Dockerfile", "#384d54")),
         "makefile" | "gnumakefile" => return Some(("Makefile", "#427819")),
+        "cmakelists.txt" => return Some(("CMake", "#da3434")),
         _ => {}
     }
     let ext = Path::new(&lower).extension().and_then(|e| e.to_str())?;
@@ -1241,7 +1242,7 @@ fn language_for(rel_path: &str) -> Option<(&'static str, &'static str)> {
         "java" => ("Java", "#b07219"),
         "kt" | "kts" => ("Kotlin", "#a97bff"),
         "c" | "h" => ("C", "#555555"),
-        "cpp" | "cc" | "cxx" | "hpp" | "hh" => ("C++", "#f34b7d"),
+        "cpp" | "cc" | "cxx" | "c++" | "hpp" | "hh" | "hxx" | "h++" | "ipp" | "inl" => ("C++", "#f34b7d"),
         "cs" => ("C#", "#178600"),
         "sh" | "bash" | "zsh" => ("Shell", "#89e051"),
         "ps1" | "psm1" => ("PowerShell", "#012456"),
@@ -1254,6 +1255,14 @@ fn language_for(rel_path: &str) -> Option<(&'static str, &'static str)> {
         "dart" => ("Dart", "#00b4ab"),
         "xml" => ("XML", "#0060ac"),
         "lua" => ("Lua", "#000080"),
+        "qml" => ("QML", "#44a51c"),
+        "pro" | "pri" | "prf" => ("QMake", "#41cd52"),
+        "ui" => ("Qt UI", "#41cd52"),
+        "qrc" => ("Qt Resource", "#41cd52"),
+        "qss" => ("Qt Style Sheet", "#41cd52"),
+        "cmake" => ("CMake", "#da3434"),
+        "aidl" => ("AIDL", "#34eb92"),
+        "hidl" => ("HIDL", "#34eb92"),
         _ => return None,
     })
 }
