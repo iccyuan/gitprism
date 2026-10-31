@@ -1,6 +1,7 @@
 import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import TsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
+import { registerQml } from "./qml";
 
 // fonts ship with the app (woff2 bundled by vite) — no system fonts required
 // every family needs its real 400/700 + italics bundled: themes bold keywords
@@ -81,6 +82,8 @@ const cssLang = (monaco.languages as unknown as { css?: any }).css;
 for (const d of [cssLang?.cssDefaults, cssLang?.lessDefaults, cssLang?.scssDefaults]) {
   d?.setOptions({ validate: false });
 }
+
+registerQml();
 
 const CUSTOM_THEMES: Record<string, unknown> = {
   "github-light": githubLight,
@@ -190,9 +193,8 @@ const EXT_LANG: Record<string, string> = {
   ".aidl": "java", // Android IDL: Java-style interfaces/parcelables
   ".hidl": "java",
   ".kts": "kotlin",
-  // Qt: QML is JS-with-object-blocks; qmake files are shell-like key=value;
+  // Qt (QML has its own grammar in ./qml.ts): qmake files are shell-like key=value;
   // .ui/.qrc are XML; .qss is CSS. (.ts is left to TypeScript, not Qt Linguist.)
-  ".qml": "javascript",
   ".pro": "shell",
   ".pri": "shell",
   ".prf": "shell",

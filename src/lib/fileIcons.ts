@@ -2,6 +2,7 @@
 // 1300+ extensions / 2100+ filenames to icons, so every file type gets the
 // same icon family. SVGs bundle as on-demand assets via the eager url glob.
 import manifest from "material-icon-theme/dist/material-icons.json";
+import qtIcon from "../assets/icons/qt.svg?url";
 
 const ICON_URLS = import.meta.glob<string>("/node_modules/material-icon-theme/icons/*.svg", {
   eager: true,
@@ -22,6 +23,17 @@ const EXTRA_EXTENSIONS: Record<string, string> = {
   hidl: "android",
 };
 
+// our own SVGs for types the material set has no icon for at all
+const CUSTOM_EXTENSIONS: Record<string, string> = {
+  qml: qtIcon,
+  pro: qtIcon, // qmake project (material maps it to Prolog; qmake is far more common)
+  pri: qtIcon,
+  prf: qtIcon,
+  qrc: qtIcon,
+  ui: qtIcon,
+  qss: qtIcon,
+};
+
 function urlFor(iconName: string): string | undefined {
   return ICON_URLS[`/node_modules/material-icon-theme/icons/${iconName}.svg`];
 }
@@ -37,6 +49,7 @@ export function fileIcon(path: string): string {
     const parts = name.split(".");
     for (let i = 1; i < parts.length && !icon; i++) {
       const ext = parts.slice(i).join(".");
+      if (CUSTOM_EXTENSIONS[ext]) return CUSTOM_EXTENSIONS[ext];
       icon = EXTRA_EXTENSIONS[ext] ?? fileExtensions[ext];
     }
   }
