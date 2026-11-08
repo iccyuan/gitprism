@@ -321,7 +321,7 @@ fn record_console(repo: &Path, args: &[&str], ok: bool) {
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
-fn git_command(repo: &Path) -> Command {
+pub(crate) fn git_command(repo: &Path) -> Command {
     let mut cmd = Command::new("git");
     cmd.current_dir(repo);
     cmd.args(["-c", "core.quotepath=off"]);
